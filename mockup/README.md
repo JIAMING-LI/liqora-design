@@ -1,10 +1,10 @@
 # Liqora 桌面 Mockup
 
-> 当前 HTML 为 v0.22，对应 PRD v1.18／UI v0.22，已同步 PnL 趋势与关联 Swap 活动。按用户提供的 [Dashboard-2 截图](designs/dashboard-2-reference.png)更新首屏、Geist 字体、Reicon 图标和品牌素材。
+> 当前 HTML 为 v0.25，对应 PRD v1.18／UI v0.25，已同步 Profile 命名、列表 Range Indicator 精简、PnL 图表正负分色、费用口径切换与关联 Swap 活动。按用户提供的 [Dashboard-2 截图](designs/dashboard-2-reference.png)更新首屏、Geist 字体、Reicon 图标和品牌素材。
 
 当前文档见 [UI 需求](../docs/current-lp-ui-requirements.md) 和 [PRD](https://github.com/JIAMING-LI/liqora-docs/blob/main/prd/current-lp-performance-prd.md)。保留原生 HTML／CSS／JavaScript，无需安装项目依赖；从本目录运行 `python3 -m http.server 8767 --bind 127.0.0.1`，访问 `http://127.0.0.1:8767/`。使用 HTTP 预览可正常加载本地图标文件；建议宽度 1440px，最小桌面宽度 1100px。
 
-两个页面：当前 LP 总览和单页 LP 详情。总览依次展示 Position value、Uncollected fees、Total fees、PnL 及较 24h 前变化、仓位价值柱图、各 LP 当前未领取手续费环图、逐行 LP 列表；总览图表固定使用 Open 数据，列表由状态 Tab 筛选，图下入口及列表整行都可进入对应详情。详情按新参考采用价值／Total fees／APR／PnL 四项指标及前日变化、仓位余额／PnL 趋势图、费用与资产区间双栏、底部活动。加入手续费汇总、投入盈亏比、窗口日均；首页 APR 固定 24h；详情可选 1h／24h／7d／30d，返回不改变首页的 24h。活动按截图五列展示，双币数量直接可见；区间用低饱和蓝细带、端点线、圆点当前价指针和对齐的上下限。全部可见文案、提示、错误、验证及费用关联界面均为英文。
+两个页面：钱包 Profile 和单页 LP 详情。Profile 依次展示 Position value、Uncollected fees、Total fees、PnL 及较 24h 前变化、仓位价值柱图、各 LP 当前未领取手续费环图、逐行 LP 列表；图表固定使用 Open 数据，列表由状态 Tab 筛选，图下入口及列表整行都可进入对应详情。详情按新参考采用价值／Total fees／APR／PnL 四项指标及前日变化、仓位余额／PnL 趋势图、费用与资产区间双栏、底部活动。加入手续费汇总、投入盈亏比、窗口日均；Profile APR 固定 24h；详情可选 1h／24h／7d／30d，返回不改变 Profile 的 24h。活动按截图五列展示，双币数量直接可见；Range Indicator 显示当前价、上下限、距离与红橙绿三态。全部可见文案、提示、错误、验证及费用关联界面均为英文。
 
 演示步骤：打开 NFT #204801 → `Link preparation costs` → `Simulate verification` → `Use sample hash` → `Parse transaction` → 输入 6 SPY → `Save allocation`。所得 10 SPY、兑换费 30 USD、Gas 2 USD，分配后费用 19.20 USD，盈亏由 295 变为 275.80 USD，投入盈亏比由 2.95% 变为 2.76%。手续费汇总仍为 100 USD，24h APR 仍为 36.50%。修改、重复保存、全部剩余、跨四个 LP 的额度限制及撤销可演示；总览和详情保持同一成本口径，断开验证恢复公开 LP 盈亏。
 
@@ -12,10 +12,11 @@
 
 全部为构造数据。前日钱包快照为价值 $20,830、PnL $506、费用 $188、未领取 $65，当时第二个 LP 尚未创建；四项变化是快照金额变化，包含当前 LP 集合变化。当前示例 SPY = 500 USD、USDG = 0.99 USD；活动金额使用各自构造的历史估值。详情前日快照使用首个 LP 价值 $10,300、未领取 $30、PnL $385；APR 的前日同窗口值为 1h 73%、24h 32.85%、7d 18.25%，第二个 LP 尚未存在。期间费用的双币估值按构造的各半分布，首个 LP 平均本金按两币各 $5,000；这些是演示拆分。活动 Gas 原生数量使用各笔构造历史 ETH 价格 $2,500 换算，不是实时行情。哈希、合约和 poolId 也是示例，不对应真实区块浏览器记录。模拟验证、哈希解析、60 秒刷新与保存仅演示交互，不调用钱包、RPC 或服务端。保存仅存在当前页面会话，重载清空；真实产品的数据库恢复、签名鉴权、跨设备权限及费用去重仍需实现和验收。原型仅支持示例 hash，不是通用交易解析器。
 
-- [图表色卡](../chart-palette.svg) · [标签色卡](../tag-palette.svg)
-- [总览截图](overview.jpg)
+- [图表色卡](../chart-palette.svg) · [正负指标色卡](../positive-negative-chart-palette.svg) · [标签色卡](../tag-palette.svg)
+- [Profile 截图](overview.jpg)
 - [详情截图](detail.jpg)
 - [详情趋势图](trends.jpg)
+- [接近边界 Range Indicator](near-range.jpg)
 - [活动表格截图](activity.jpg)
 - [价格区间（v0.9 历史配色）](range.jpg)
 - [费用关联截图](allocation.jpg)
@@ -26,7 +27,7 @@
 
 已安装 `agent-browser` 和 Python 3 时，从设计仓库根目录运行 `node mockup/check.mjs`；脚本自动启动并关闭临时本地 HTTP 服务。检查英文文案、盈亏与手续费汇总、比值、APR／日均、窗口保留、权限、哈希、额度、重复保存／修改／撤销、错误状态及桌面宽度。加 `--screenshots` 更新上述截图。该检查仅验证原型，不代表 PRD 的链上接入或产品验收通过。
 
-品牌使用用户提供的 `assets/liqora-logo-v2.svg`，金额统一显示 `$`。区间上下限乘 USDG 的美元价格后再展示，列表价值／未领取／PnL 仅显示主数值且隐藏 NFT 编号；双币 Logo、数量及估值在详情账单展示。图标来自 Reicon 1.2.4 Outline，使用原始路径组成的本地 SVG sprite，保留 MIT 许可。Geist 字体与 SPY／USDG／Robinhood Chain／Uniswap Logo 均本地托管；[素材与来源](assets/README.md)列出官方链接。图表与区间使用仓库根目录的[图表色卡](../chart-palette.svg)，交易哈希标签使用[标签色卡](../tag-palette.svg)；语义性的涨跌和状态色保持独立。LP gas 与活动增加 ETH 原生数量／图标。没有新增项目依赖，图表使用 Canvas 并在旁边提供等价文字数值。[原型检查](../README.md#验证)记录同屏参考对照与交互验证。
+品牌使用用户提供的 `assets/liqora-logo-v2.svg`，金额统一显示 `$`。区间上下限乘 USDG 的美元价格后再展示，列表价值／未领取／PnL 仅显示主数值且隐藏 NFT 编号；双币 Logo、数量及估值在详情账单展示。图标来自 Reicon 1.2.4 Outline，使用原始路径组成的本地 SVG sprite，保留 MIT 许可。Geist 字体与 SPY／USDG／Robinhood Chain／Uniswap Logo 均本地托管；[素材与来源](assets/README.md)列出官方链接。数据图表使用[图表色卡](../chart-palette.svg)，PnL Chart 使用[正负指标色卡](../positive-negative-chart-palette.svg)；Range Indicator 从正负、图表与[标签色卡](../tag-palette.svg)复用红、橙、绿组合，交易 hash 标签继续使用标签色卡。LP gas 与活动增加 ETH 原生数量／图标。没有新增项目依赖，图表使用 Canvas 并在旁边提供等价文字数值。[原型检查](../README.md#验证)记录同屏参考对照与交互验证。
 
 ### v0.14 简化演示
 
@@ -75,7 +76,7 @@
 
 ### v0.20 同交易颜色标签
 
-Recent activity 每行左上角显示可点击的 Txn 缩略哈希标签，同 transaction 的 Withdraw／Collect／Deposit 共享底色。从仓库根目录[标签色卡](../tag-palette.svg)选取六种浅色，按完整示例 hash 分配并循环；保留 hash 文本识别，统一搭配通过 4.5:1 对比度检查的深色文字。
+Recent activity 每行左上角仅显示可点击的缩略 hash 标签，不加 `Txn` 前缀；同 transaction 的 Withdraw／Collect／Deposit 共享底色。从仓库根目录[标签色卡](../tag-palette.svg)选取六种浅色，按完整示例 hash 分配并循环；保留 hash 文本识别，统一搭配通过 4.5:1 对比度检查的深色文字。
 
 ### v0.21 已关联的 Swap 活动
 
@@ -86,3 +87,15 @@ Recent activity 每行左上角显示可点击的 Txn 缩略哈希标签，同 t
 详情右图从 Fee APR trend 改为 PnL trend，保留顶部 Fee APR 与期间指标。PnL 图展示累计美元盈亏，徽标为首末美元差；APR 窗口切换不改图，费用口径切换同步重绘。正值、负值、已平仓与缺历史场景均有检查；历史版本中的 APR 曲线说明仅记录当时行为。
 
 [负值 PnL 详情](negative-pnl.jpg)
+
+### v0.23 PnL 图表正负分色
+
+正负指标色卡只用于 PnL Chart：零线上方的正值折线为深绿、面积以浅绿填充至零线；零线下方的负值折线为深红、面积以浅红填充至零线。同一条曲线跨零时同时展示两种颜色。总览、列表、指标数值、变化徽标、费用关联预览、Position value 趋势、状态和错误均不套用该色卡。
+
+### v0.24 Range Indicator 三态
+
+详情 Range Indicator 按参考重排为当前价／状态、区间轨道、Min／Max 和距上下限百分比。超出区间为红色 `Out of range`；仍在区间内且距任一边界不超过当前价格 1% 时使用橙色，但状态仍显示 `In range`；其余区间内状态为绿色。列表复用同一状态计算与三态配色，第三个 LP 为近边界演示样例。
+
+### v0.25 Profile 与列表区间精简
+
+首页可见名称由 `Overview` 改为 `Profile`。列表 Range Indicator 移除状态 Tag、独立 Pool 价格行及 Min／Max 字样，仅在黑色当前价指针上方显示价格；区间尺左右各留 24px，两端仍显示价格，并保留红橙绿区间带及完整可访问名称。详情页仍保留完整状态和边界距离。

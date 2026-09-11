@@ -1,13 +1,13 @@
 # Liqora Design
 
-Liqora 的 UI 需求、交互原型、设计参考、配色与素材。当前原型与 UI 需求均为 v0.22，业务基线为 PRD v1.18。
+Liqora 的 UI 需求、交互原型、设计参考、配色与素材。当前原型与 UI 需求均为 v0.25，业务基线为 PRD v1.18。
 
 - [UI 需求](docs/current-lp-ui-requirements.md)
 - [交互原型](mockup/index.html) · [原型说明](mockup/README.md)
-- [总览截图](mockup/overview.jpg) · [详情截图](mockup/detail.jpg) · [活动与交易标签](mockup/activity.jpg)
+- [Profile 截图](mockup/overview.jpg) · [详情截图](mockup/detail.jpg) · [活动与交易标签](mockup/activity.jpg)
 - [关联 Swap](mockup/linked-swap.jpg) · [居中费用关联弹框](mockup/allocation.jpg)
 - [设计稿与参考素材](mockup/designs/README.md) · [Revert 参考观察](docs/revert-reference-review.md)
-- [图表配色 SVG](chart-palette.svg) · [PNG](chart-palette.png) · [交易标签配色 SVG](tag-palette.svg)
+- [图表配色 SVG](chart-palette.svg) · [PNG](chart-palette.png) · [正负指标配色 SVG](positive-negative-chart-palette.svg) · [PNG](positive-negative-chart-palette.png) · [交易标签配色 SVG](tag-palette.svg)
 - [字体、图标与 Logo 来源](mockup/assets/README.md)
 - [代理协作规则](AGENTS.md) · [Commit 规范](COMMIT_CONVENTION.md)
 

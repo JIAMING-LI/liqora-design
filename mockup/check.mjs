@@ -10,6 +10,7 @@ if(process.argv.includes('--logic-only')){
   const html=readFileSync(new URL('./index.html',import.meta.url),'utf8');
   const source=html.split('<script>')[1].split('</script>')[0].replace(/\nrender\(\);\s*$/, '');
   const element={addEventListener(){}};
+  assert.ok(html.includes('--positive-line:#759985')&&html.includes('--negative-line:#a56f70'));
   runInNewContext(source+`
     assert.equal(profit(positions[0]),295);
     assert.equal(total(shownProfit),339);
@@ -47,6 +48,7 @@ if(process.argv.includes('--logic-only')){
     assert.equal(new Set(transactionColors.map(([bg])=>bg)).size,6);
     const luminance=hex=>hex.slice(1).match(/../g).map(n=>parseInt(n,16)/255).map(n=>n<=.04045?n/12.92:((n+.055)/1.055)**2.4).reduce((sum,n,i)=>sum+n*[.2126,.7152,.0722][i],0);
     for(const [bg,fg] of transactionColors){const a=luminance(bg),b=luminance(fg);assert.ok((Math.max(a,b)+.05)/(Math.min(a,b)+.05)>=4.5);}
+    assert.ok(pnlHistory[0].some(value=>value>0)&&pnlHistory[0].some(value=>value<0));
     for(const p of allPositions){
       const index=allPositions.indexOf(p),original=JSON.stringify(activityRows(p));
       state.alloc[index]=6;state.verified=false;
@@ -96,6 +98,7 @@ if(process.argv.includes('--logic-only')){
     assert.equal(closedPositions[0].id,positions[0].id);
     assert.notEqual(closedPositions[0],positions[0]);
     const openCharts=charts(),openOverview=home().split('<section id="positions"')[0];
+    assert.ok(home().includes('<h1>Profile</h1>') && !home().includes('<h1>Overview</h1>'));
     assert.ok(home().indexOf('Position charts')<home().indexOf('role="tablist"'));
     assert.ok(home().indexOf('role="tablist"')<home().indexOf('role="tabpanel"'));
     assert.ok(!home().includes('<h2>Current positions'));
@@ -247,6 +250,11 @@ if(process.argv.includes('--logic-only')){
     assert.ok(rangeView(positions[0]).includes('$475.20'));
     assert.ok(rangeView(positions[1]).includes('$2,574.00'));
     assert.ok(rangeView(positions[1]).includes('Out of range'));
+    assert.ok(rangeView(positions[0]).includes('range-price') && !rangeView(positions[0]).includes('range-badge') && !rangeView(positions[0]).includes('Min'));
+    assert.equal(rangeState(positions[0]).tone,'inside');
+    assert.equal(rangeState(positions[1]).tone,'outside');
+    assert.deepEqual(rangeState(positions[2]),{tone:'near',edge:'low'});
+    assert.ok(rangeView(positions[2],true).includes('In range, near boundary'));
     state.period='1h';assert.ok(home().includes('36.50%'));
     assert.ok(!home().includes('87.60%'));assert.ok(detail().includes('87.60%'));
     state.period='24h';
@@ -286,6 +294,8 @@ try {
   check("document.querySelectorAll('.charts canvas').length===2 && document.querySelectorAll('.pair-logos img').length===8");
   text('.chart-data','39.1%'); text('.chart-legend','43.5%');
   check("document.documentElement.scrollWidth===innerWidth && document.querySelectorAll('.lp-table tbody tr').length===4");
+  check("document.querySelector('#page-label').innerText==='Profile' && document.querySelector('h1').innerText==='Profile'");
+  check("document.querySelectorAll('.range-view.inside').length===1 && document.querySelectorAll('.range-view.near').length===1 && document.querySelectorAll('.range-view.outside').length===2 && !document.querySelector('.range-cell .range-badge') && ![...document.querySelectorAll('.range-cell')].some(cell=>/\\b(?:Min|Max)\\b/.test(cell.innerText)) && document.querySelectorAll('.range-cell .range-price').length===4 && [...document.querySelectorAll('.range-cell .range-view')].every(view=>view.querySelector('.range-price').style.left===view.querySelector('.range-marker').style.left)");
   snapshot('overview');
   text('.chart-data','ETH / USDG'); text('.chart-data','NVDA / USDG'); text('.chart-legend','CRCL / USDG');
   check("document.querySelector('#positions.panel > .section-head [role=tablist]') && !document.querySelector('#positions .section-head h2')");
@@ -376,6 +386,9 @@ try {
   browser('select','#scenario','normal'); click('Remove allocation'); browser('click','#dialog [data-action=confirm-revoke]'); text('#position-pnl','+$295.00'); check("!document.querySelector('[data-activity-type=Swap]')");
   click('24h'); browser('click','[data-action=mode][data-mode=base]'); snapshot('detail');
   browser('scrollintoview','.performance-charts'); snapshot('trends');
+  click('Back to positions'); click('View NFT 204803 details');
+  check("document.querySelector('.detail-range .range-view').classList.contains('near') && document.querySelector('.detail-range .range-badge').innerText.trim()==='In range'");
+  browser('scrollintoview','.detail-range'); snapshot('near-range');
   click('Back to positions'); click('Disconnect verification'); text('#app','+$339.00');
   check("!document.querySelector('[data-mode]') && !document.querySelector('#app').innerText.includes('19.20')");
   browser('select','#scenario','partial'); text('#app','1 LP is missing a historical deposit price.');
