@@ -9,6 +9,7 @@ Liqora 的 UI 需求、交互原型、设计参考、配色与素材。当前原
 - [设计稿与参考素材](mockup/designs/README.md) · [Revert 参考观察](docs/revert-reference-review.md)
 - [图表配色 SVG](chart-palette.svg) · [PNG](chart-palette.png) · [交易标签配色 SVG](tag-palette.svg)
 - [字体、图标与 Logo 来源](mockup/assets/README.md)
+- [代理协作规则](AGENTS.md) · [Commit 规范](COMMIT_CONVENTION.md)
 
 业务 PRD、领域术语、计算样例与 ADR 继续维护在 [liqora-docs](https://github.com/JIAMING-LI/liqora-docs)。本地可将两个仓库并列检出，最新工作区 PRD 位于 `../liqora-docs/prd/current-lp-performance-prd.md`。
 
