@@ -1,6 +1,6 @@
 # Liqora Design
 
-Liqora 的 UI 需求、交互原型、设计参考、配色与素材。当前原型与 UI 需求均为 v0.21，业务基线为 PRD v1.17。
+Liqora 的 UI 需求、交互原型、设计参考、配色与素材。当前原型与 UI 需求均为 v0.22，业务基线为 PRD v1.18。
 
 - [UI 需求](docs/current-lp-ui-requirements.md)
 - [交互原型](mockup/index.html) · [原型说明](mockup/README.md)

@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="760" viewBox="0 0 1400 760">
+  <rect width="1400" height="760" fill="#F4F1EC"/>
+
+  <style>
+    .title { fill: #3F4140; font: 600 32px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    .subtitle { fill: #858783; font: 15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; letter-spacing: 3px; }
+    .name { fill: #4B4C4B; font: 600 17px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    .hex { fill: #8A8C88; font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; letter-spacing: 1.5px; }
+    .note { fill: #9A9C98; font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    .card { fill: #FFFFFF; }
+  </style>
+
+  <text x="70" y="76" class="title">正负指标图表色卡</text>
+  <text x="70" y="108" class="subtitle">POSITIVE / NEGATIVE CHART PALETTE · 10 COLORS</text>
+
+  <g transform="translate(70 160)">
+    <rect class="card" width="236" height="220" rx="18"/>
+    <path d="M18 0h200a18 18 0 0 1 18 18v122H0V18A18 18 0 0 1 18 0Z" fill="#D8E4DA"/>
+    <text x="18" y="174" class="name">淡雾绿 · 正向 1</text><text x="18" y="202" class="hex">#D8E4DA</text>
+  </g>
+  <g transform="translate(326 160)">
+    <rect class="card" width="236" height="220" rx="18"/>
+    <path d="M18 0h200a18 18 0 0 1 18 18v122H0V18A18 18 0 0 1 18 0Z" fill="#BFCFC2"/>
+    <text x="18" y="174" class="name">鼠尾绿 · 正向 2</text><text x="18" y="202" class="hex">#BFCFC2</text>
+  </g>
+  <g transform="translate(582 160)">
+    <rect class="card" width="236" height="220" rx="18"/>
+    <path d="M18 0h200a18 18 0 0 1 18 18v122H0V18A18 18 0 0 1 18 0Z" fill="#A5BDA9"/>
+    <text x="18" y="174" class="name">灰青绿 · 正向 3</text><text x="18" y="202" class="hex">#A5BDA9</text>
+  </g>
+  <g transform="translate(838 160)">
+    <rect class="card" width="236" height="220" rx="18"/>
+    <path d="M18 0h200a18 18 0 0 1 18 18v122H0V18A18 18 0 0 1 18 0Z" fill="#8FAC97"/>
+    <text x="18" y="174" class="name">柔苔绿 · 正向 4</text><text x="18" y="202" class="hex">#8FAC97</text>
+  </g>
+  <g transform="translate(1094 160)">
+    <rect class="card" width="236" height="220" rx="18"/>
+    <path d="M18 0h200a18 18 0 0 1 18 18v122H0V18A18 18 0 0 1 18 0Z" fill="#759985"/>
+    <text x="18" y="174" class="name">深桉绿 · 正向 5</text><text x="18" y="202" class="hex">#759985</text>
+  </g>
+
+  <g transform="translate(70 408)">
+    <rect class="card" width="236" height="220" rx="18"/>
+    <path d="M18 0h200a18 18 0 0 1 18 18v122H0V18A18 18 0 0 1 18 0Z" fill="#E8D8D7"/>
+    <text x="18" y="174" class="name">淡雾红 · 负向 1</text><text x="18" y="202" class="hex">#E8D8D7</text>
+  </g>
+  <g transform="translate(326 408)">
+    <rect class="card" width="236" height="220" rx="18"/>
+    <path d="M18 0h200a18 18 0 0 1 18 18v122H0V18A18 18 0 0 1 18 0Z" fill="#D8BCBB"/>
+    <text x="18" y="174" class="name">灰玫红 · 负向 2</text><text x="18" y="202" class="hex">#D8BCBB</text>
+  </g>
+  <g transform="translate(582 408)">
+    <rect class="card" width="236" height="220" rx="18"/>
+    <path d="M18 0h200a18 18 0 0 1 18 18v122H0V18A18 18 0 0 1 18 0Z" fill="#C8A2A0"/>
+    <text x="18" y="174" class="name">柔砖红 · 负向 3</text><text x="18" y="202" class="hex">#C8A2A0</text>
+  </g>
+  <g transform="translate(838 408)">
+    <rect class="card" width="236" height="220" rx="18"/>
+    <path d="M18 0h200a18 18 0 0 1 18 18v122H0V18A18 18 0 0 1 18 0Z" fill="#B88785"/>
+    <text x="18" y="174" class="name">陶土红 · 负向 4</text><text x="18" y="202" class="hex">#B88785</text>
+  </g>
+  <g transform="translate(1094 408)">
+    <rect class="card" width="236" height="220" rx="18"/>
+    <path d="M18 0h200a18 18 0 0 1 18 18v122H0V18A18 18 0 0 1 18 0Z" fill="#A56F70"/>
+    <text x="18" y="174" class="name">深莓红 · 负向 5</text><text x="18" y="202" class="hex">#A56F70</text>
+  </g>
+
+  <text x="70" y="700" class="note">绿表示正向，红表示负向；建议搭配正负号或箭头，避免仅靠颜色传达</text>
+</svg>

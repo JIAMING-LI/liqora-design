@@ -1,10 +1,10 @@
 # Liqora 桌面 Mockup
 
-> 当前 HTML 为 v0.21，对应 PRD v1.17／UI v0.21，已同步关联 Swap 活动。按用户提供的 [Dashboard-2 截图](designs/dashboard-2-reference.png)更新首屏、Geist 字体、Reicon 图标和品牌素材。
+> 当前 HTML 为 v0.22，对应 PRD v1.18／UI v0.22，已同步 PnL 趋势与关联 Swap 活动。按用户提供的 [Dashboard-2 截图](designs/dashboard-2-reference.png)更新首屏、Geist 字体、Reicon 图标和品牌素材。
 
 当前文档见 [UI 需求](../docs/current-lp-ui-requirements.md) 和 [PRD](https://github.com/JIAMING-LI/liqora-docs/blob/main/prd/current-lp-performance-prd.md)。保留原生 HTML／CSS／JavaScript，无需安装项目依赖；从本目录运行 `python3 -m http.server 8767 --bind 127.0.0.1`，访问 `http://127.0.0.1:8767/`。使用 HTTP 预览可正常加载本地图标文件；建议宽度 1440px，最小桌面宽度 1100px。
 
-两个页面：当前 LP 总览和单页 LP 详情。总览依次展示 Position value、Uncollected fees、Total fees、PnL 及较 24h 前变化、仓位价值柱图、各 LP 当前未领取手续费环图、逐行 LP 列表；总览图表固定使用 Open 数据，列表由状态 Tab 筛选，图下入口及列表整行都可进入对应详情。详情按新参考采用价值／Total fees／APR／PnL 四项指标及前日变化、仓位余额／APR 趋势图、费用与资产区间双栏、底部活动。加入手续费汇总、投入盈亏比、窗口日均；首页 APR 固定 24h；详情可选 1h／24h／7d／30d，返回不改变首页的 24h。活动按截图五列展示，双币数量直接可见；区间用低饱和蓝细带、端点线、圆点当前价指针和对齐的上下限。全部可见文案、提示、错误、验证及费用关联界面均为英文。
+两个页面：当前 LP 总览和单页 LP 详情。总览依次展示 Position value、Uncollected fees、Total fees、PnL 及较 24h 前变化、仓位价值柱图、各 LP 当前未领取手续费环图、逐行 LP 列表；总览图表固定使用 Open 数据，列表由状态 Tab 筛选，图下入口及列表整行都可进入对应详情。详情按新参考采用价值／Total fees／APR／PnL 四项指标及前日变化、仓位余额／PnL 趋势图、费用与资产区间双栏、底部活动。加入手续费汇总、投入盈亏比、窗口日均；首页 APR 固定 24h；详情可选 1h／24h／7d／30d，返回不改变首页的 24h。活动按截图五列展示，双币数量直接可见；区间用低饱和蓝细带、端点线、圆点当前价指针和对齐的上下限。全部可见文案、提示、错误、验证及费用关联界面均为英文。
 
 演示步骤：打开 NFT #204801 → `Link preparation costs` → `Simulate verification` → `Use sample hash` → `Parse transaction` → 输入 6 SPY → `Save allocation`。所得 10 SPY、兑换费 30 USD、Gas 2 USD，分配后费用 19.20 USD，盈亏由 295 变为 275.80 USD，投入盈亏比由 2.95% 变为 2.76%。手续费汇总仍为 100 USD，24h APR 仍为 36.50%。修改、重复保存、全部剩余、跨四个 LP 的额度限制及撤销可演示；总览和详情保持同一成本口径，断开验证恢复公开 LP 盈亏。
 
@@ -12,7 +12,7 @@
 
 全部为构造数据。前日钱包快照为价值 $20,830、PnL $506、费用 $188、未领取 $65，当时第二个 LP 尚未创建；四项变化是快照金额变化，包含当前 LP 集合变化。当前示例 SPY = 500 USD、USDG = 0.99 USD；活动金额使用各自构造的历史估值。详情前日快照使用首个 LP 价值 $10,300、未领取 $30、PnL $385；APR 的前日同窗口值为 1h 73%、24h 32.85%、7d 18.25%，第二个 LP 尚未存在。期间费用的双币估值按构造的各半分布，首个 LP 平均本金按两币各 $5,000；这些是演示拆分。活动 Gas 原生数量使用各笔构造历史 ETH 价格 $2,500 换算，不是实时行情。哈希、合约和 poolId 也是示例，不对应真实区块浏览器记录。模拟验证、哈希解析、60 秒刷新与保存仅演示交互，不调用钱包、RPC 或服务端。保存仅存在当前页面会话，重载清空；真实产品的数据库恢复、签名鉴权、跨设备权限及费用去重仍需实现和验收。原型仅支持示例 hash，不是通用交易解析器。
 
-- [图表配色板](palette.html) · [配色板截图](palette.jpg)
+- [图表色卡](../chart-palette.svg) · [标签色卡](../tag-palette.svg)
 - [总览截图](overview.jpg)
 - [详情截图](detail.jpg)
 - [详情趋势图](trends.jpg)
@@ -20,13 +20,13 @@
 - [价格区间（v0.9 历史配色）](range.jpg)
 - [费用关联截图](allocation.jpg)
 
-趋势横轴为过去 24h（第二个 LP 从建仓起 8h），APR 在每个采样点按当前所选窗口滚动计算。View data 展示固定历史样例，末值复用当前摘要；首个 LP 的 24h 余额差为 −$100，APR 从 32.85% 到 36.50%，增加 3.65 pp。缺窗口不画曲线，第二个 LP 的创建时 1h APR 不可用。余额走势包含加减仓，不作为投资回报。
+趋势横轴为过去 24h（第二个 LP 从建仓起 8h），PnL 为各采样时点从建仓累计的美元盈亏，独立于 APR 窗口。View data 展示固定构造样例，Open 末值使用当前摘要的同一公式；首个 LP 的余额差为 −$100，PnL 从 $385 到 $295，变化 −$90。关联建仓前准备成本 $19.20 后，Adjusted PnL 从 $365.80 到 $275.80；断开验证恢复公开口径。负值支持零线，缺数据保留断点。Closed 曲线止于平仓；余额走势包含加减仓，不作为投资回报。
 
 运行 `node mockup/check.mjs --logic-only` 可检查图表合计、占比、零值／空态、页面顺序、费用口径与 APR 一致性，不打开浏览器。
 
 已安装 `agent-browser` 和 Python 3 时，从设计仓库根目录运行 `node mockup/check.mjs`；脚本自动启动并关闭临时本地 HTTP 服务。检查英文文案、盈亏与手续费汇总、比值、APR／日均、窗口保留、权限、哈希、额度、重复保存／修改／撤销、错误状态及桌面宽度。加 `--screenshots` 更新上述截图。该检查仅验证原型，不代表 PRD 的链上接入或产品验收通过。
 
-品牌使用用户提供的 `assets/liqora-logo-v2.svg`，金额统一显示 `$`。区间上下限乘 USDG 的美元价格后再展示，列表价值／未领取／PnL 仅显示主数值且隐藏 NFT 编号；双币 Logo、数量及估值在详情账单展示。图标来自 Reicon 1.2.4 Outline，使用原始路径组成的本地 SVG sprite，保留 MIT 许可。Geist 字体与 SPY／USDG／Robinhood Chain／Uniswap Logo 均本地托管；[素材与来源](assets/README.md)列出官方链接。卡片试用 12px 轻圆角，图标用黑色 #1E2327，单系列曲线用烟灰蓝 #8FA0A8 与雾蓝 #D8DFE6 渐变面积，多 LP 图表用烟灰蓝 #8FA0A8 与苔绿 #C9D1C8；LP gas 与活动增加 ETH 原生数量／图标。没有新增项目依赖，图表使用 Canvas 并在旁边提供等价文字数值。[原型检查](../README.md#验证)记录同屏参考对照与交互验证。
+品牌使用用户提供的 `assets/liqora-logo-v2.svg`，金额统一显示 `$`。区间上下限乘 USDG 的美元价格后再展示，列表价值／未领取／PnL 仅显示主数值且隐藏 NFT 编号；双币 Logo、数量及估值在详情账单展示。图标来自 Reicon 1.2.4 Outline，使用原始路径组成的本地 SVG sprite，保留 MIT 许可。Geist 字体与 SPY／USDG／Robinhood Chain／Uniswap Logo 均本地托管；[素材与来源](assets/README.md)列出官方链接。图表与区间使用仓库根目录的[图表色卡](../chart-palette.svg)，交易哈希标签使用[标签色卡](../tag-palette.svg)；语义性的涨跌和状态色保持独立。LP gas 与活动增加 ETH 原生数量／图标。没有新增项目依赖，图表使用 Canvas 并在旁边提供等价文字数值。[原型检查](../README.md#验证)记录同屏参考对照与交互验证。
 
 ### v0.14 简化演示
 
@@ -75,8 +75,14 @@
 
 ### v0.20 同交易颜色标签
 
-Recent activity 每行左上角显示可点击的 Txn 缩略哈希标签，同 transaction 的 Withdraw／Collect／Deposit 共享底色。按两张用户色卡合并相近黄、米色后保留六色，按完整示例 hash 分配并循环；保留 hash 文本识别，深浅底分别搭配通过 4.5:1 对比度检查的文字色。
+Recent activity 每行左上角显示可点击的 Txn 缩略哈希标签，同 transaction 的 Withdraw／Collect／Deposit 共享底色。从仓库根目录[标签色卡](../tag-palette.svg)选取六种浅色，按完整示例 hash 分配并循环；保留 hash 文本识别，统一搭配通过 4.5:1 对比度检查的深色文字。
 
 ### v0.21 已关联的 Swap 活动
 
 保存准备费用关联后，当前／历史 LP 的 Recent activity 增加私有 Swap 行和 Linked preparation 标记，展示源交易支付／所得、原费用及当前 LP 分摊成本。示例源交易统一为 Jul 1, 2026 · 13:50 UTC+8，早于所有示例 LP，按原时间放在 LP 操作之后；源哈希沿用六色标签。修改更新、重复保存不重复生成，撤销移除、断开验证隐藏、重新验证恢复。活动展示与原 LP 记账数据分开，Swap 金额不加入投入、收入、Total fees 或基础 PnL。
+
+### v0.22 PnL 趋势
+
+详情右图从 Fee APR trend 改为 PnL trend，保留顶部 Fee APR 与期间指标。PnL 图展示累计美元盈亏，徽标为首末美元差；APR 窗口切换不改图，费用口径切换同步重绘。正值、负值、已平仓与缺历史场景均有检查；历史版本中的 APR 曲线说明仅记录当时行为。
+
+[负值 PnL 详情](negative-pnl.jpg)

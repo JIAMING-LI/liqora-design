@@ -78,7 +78,7 @@ if(process.argv.includes('--logic-only')){
     assert.equal(feeMetrics(positions[0]).rate,36.5);
     assert.ok(chartBadge(103,100,'Snapshot').includes('+3.00%'));
     assert.ok(chartBadge(90,100,'Snapshot').includes('negative'));
-    assert.ok(chartBadge(36.5,32.85,'Chart',true).includes('+3.65 pp'));
+    assert.ok(chartBadge(295,385,'Chart',true).includes('−$90.00'));
     assert.ok(chartBadge(0,0,'Snapshot').includes('0.00%'));
     assert.equal(chartBadge(1,0,'Snapshot'),'');
     assert.equal(chartBadge(undefined,10,'Snapshot'),'');
@@ -137,8 +137,8 @@ if(process.argv.includes('--logic-only')){
       for(const period of Object.keys(periodHours)){
         state.period=period;
         assert.ok(!/NaN|Infinity|undefined/.test(detail()));
-        const points=trendPoints(p,'apr');
-        if(points.length)assert.equal(points.at(-1).value,feeMetrics(p).rate);
+        const points=trendPoints(p,'pnl');
+        assert.equal(points.at(-1).value,shownProfit(p));
       }
     }
     state.index=4;state.verified=true;state.mode='adjusted';state.alloc[4]=2;
@@ -187,13 +187,33 @@ if(process.argv.includes('--logic-only')){
       assert.equal(trendPoints(p,'value')[0].ago,Math.min(24,p.hours));
       for(const period of Object.keys(periodHours)){
         state.period=period;
-        const points=trendPoints(p,'apr'),rate=feeMetrics(p).rate;
-        if(rate===undefined)assert.equal(points.length,0);
-        else assert.equal(points.at(-1).value,rate);
+        const points=trendPoints(p,'pnl');
+        assert.equal(points.at(-1).value,shownProfit(p));
         assert.ok(!/NaN|Infinity/.test(performanceCharts(p)));
       }
     }
-    state.period='24h';
+    state.index=0;state.period='24h';
+    const basePnl=trendPoints(positions[0],'pnl');
+    for(const period of Object.keys(periodHours)){state.period=period;assert.deepEqual(trendPoints(positions[0],'pnl'),basePnl);}
+    assert.ok(performanceCharts(positions[0]).includes('PnL trend'));
+    assert.ok(!performanceCharts(positions[0]).includes('Fee APR'));
+    assert.ok(performanceCharts(positions[0]).includes('−$90.00'));
+    assert.ok(chartBadge(5,0,'PnL',true).includes('+$5.00'));
+    assert.ok(trendPoints(positions[1],'pnl').every(p=>p.value<0));
+    state.verified=true;state.mode='adjusted';state.alloc[0]=6;
+    const adjustedPnl=trendPoints(positions[0],'pnl');
+    adjustedPnl.forEach((p,i)=>assert.ok(Math.abs(p.value-(basePnl[i].value-19.2))<1e-9));
+    assert.equal(adjustedPnl.at(-1).value,shownProfit(positions[0]));
+    assert.ok(performanceCharts(positions[0]).includes('Adjusted PnL trend'));
+    state.verified=false;
+    assert.deepEqual(trendPoints(positions[0],'pnl'),basePnl);
+    state.alloc[0]=0;state.mode='base';state.period='24h';
+    state.scenario='partial';
+    assert.ok(trendPoints(positions[1],'pnl').every(p=>p.value===undefined));
+    assert.ok(!performanceCharts(positions[1]).includes('id="pnl-trend"'));
+    assert.ok(performanceCharts(positions[1]).includes('Insufficient history'));
+    assert.ok(trendPoints(positions[1],'value').every(p=>Number.isFinite(p.value)));
+    state.scenario='normal';
     assert.ok(detail().includes('0.002000 ETH') && detail().includes('assets/ethereum.svg'));
     const detailPage=detail();
     const summary=detailPage.split('aria-label="Position summary"')[1].split('</section>')[0];
@@ -282,6 +302,7 @@ try {
   text('#app','Closed cycle snapshot'); text('#app','Aug 11, 2026'); text('#app','Price at close'); text('#app','24h ending at close');
   check("document.querySelectorAll('.token-table').length===2 && document.documentElement.scrollWidth===innerWidth");
   click('30d'); text('#apr','Insufficient history for 30d'); click('24h'); text('#apr','54.75%');
+  text('.performance-charts','PnL trend'); text('.performance-charts','+$314.00');
   snapshot('closed-detail');
   click('Back to positions'); check("document.querySelector('#tab-closed').getAttribute('aria-selected')==='true'");
   browser('select','#scenario','empty'); text('#app','+$0.00'); text('#tab-open','(0)'); text('#tab-closed','(4)');
@@ -293,6 +314,7 @@ try {
   text('#apr','87.60%'); text('#daily-fees','24.00'); text('#app','Daily equivalent · 1h');
   click('7d'); text('#apr','20.86%'); text('#daily-fees','5.71');
   click('30d'); text('#apr','Insufficient history for 30d');
+  text('.performance-charts','PnL trend'); text('.performance-charts','+$295.00'); check("!!document.querySelector('#pnl-trend') && !document.querySelector('#apr-trend')");
   click('24h'); text('#apr','36.50%'); text('#daily-fees','10.00'); english();
   click('Link preparation costs'); text('#dialog','Simulate verification'); english();
   click('Simulate verification'); browser('press','Escape');
@@ -313,6 +335,7 @@ try {
   browser('set','viewport','1440','1024');
   click('Save allocation'); text('#position-pnl','+$275.80'); text('#pnl-ratio','+2.76%'); text('#app','19.20');
   text('#total-fees','100.00'); text('#apr','36.50%');
+  text('.performance-charts','Adjusted PnL trend'); text('.performance-charts','+$275.80');
   text('[data-activity-type=Swap]','Linked preparation'); text('[data-activity-type=Swap]','19.20');
   check("document.querySelectorAll('[data-activity-type=Swap]').length===1 && document.querySelector('.activity-table tbody').lastElementChild.dataset.activityType==='Swap'");
   browser('scrollintoview','.history-panel'); snapshot('linked-swap');
@@ -333,6 +356,7 @@ try {
   check("!document.querySelector('#app').innerText.includes('Reinvested directly')");
   text('#app','Includes fees collected and reinvested'); text('#app','6,040.00'); text('#pnl-ratio','−1.72%'); text('#total-fees','70.00');
   click('1h'); text('#apr','0.00%'); text('#daily-fees','0.00');
+  text('.performance-charts','−$104.00'); check("!!document.querySelector('#pnl-trend')"); snapshot('negative-pnl');
   click('Link preparation costs');
   fill('Transaction hash','0x'+'ab'.repeat(32)); click('Parse transaction'); text('#hash-error','Only the sample hash');
   click('Use sample hash'); click('Parse transaction'); text('#qty-help','Received 10 ETH');
@@ -351,10 +375,12 @@ try {
   browser('press','Escape'); text('#position-pnl','+$263.00'); text('[data-activity-type=Swap]','32.00');
   browser('select','#scenario','normal'); click('Remove allocation'); browser('click','#dialog [data-action=confirm-revoke]'); text('#position-pnl','+$295.00'); check("!document.querySelector('[data-activity-type=Swap]')");
   click('24h'); browser('click','[data-action=mode][data-mode=base]'); snapshot('detail');
+  browser('scrollintoview','.performance-charts'); snapshot('trends');
   click('Back to positions'); click('Disconnect verification'); text('#app','+$339.00');
   check("!document.querySelector('[data-mode]') && !document.querySelector('#app').innerText.includes('19.20')");
   browser('select','#scenario','partial'); text('#app','1 LP is missing a historical deposit price.');
   click('View NFT 204802 details'); text('#app','Historical price unavailable');
+  check("!document.querySelector('#pnl-trend') && !!document.querySelector('#value-trend')");
   click('1h'); text('#apr','0.00%');
   browser('select','#scenario','stale'); click('Refresh');
   browser('wait','--fn','!document.querySelector("[data-action=refresh]").disabled');

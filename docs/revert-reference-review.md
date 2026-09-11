@@ -2,7 +2,7 @@
 
 > 观察日期：2026-09-10；公开页面，无钱包连接。<br>
 > 范围：用户提供的账户页、Robinhood Uniswap V4 #1889893 详情及其基准选择；不验证实际链上计算正确性。<br>
-> 本观察最初用于 v1.8 / v0.3；当前文档：[PRD v1.17](https://github.com/JIAMING-LI/liqora-docs/blob/main/prd/current-lp-performance-prd.md)、[UI 需求 v0.21](current-lp-ui-requirements.md)。
+> 本观察最初用于 v1.8 / v0.3；当前文档：[PRD v1.18](https://github.com/JIAMING-LI/liqora-docs/blob/main/prd/current-lp-performance-prd.md)、[UI 需求 v0.22](current-lp-ui-requirements.md)。
 
 ## 1. 账户页：紧凑比较有效
 
