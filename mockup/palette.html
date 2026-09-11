@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Liqora — Chart palette</title>
+<style>
+@font-face{font-family:Geist;src:url('assets/geist-latin.woff2') format('woff2');font-weight:100 900}
+*{box-sizing:border-box}body{margin:0;background:#fff;color:#18181b;font:14px/1.5 Geist,system-ui,sans-serif}main{max-width:1100px;margin:auto;padding:40px}header{display:flex;align-items:start;justify-content:space-between;gap:24px}h1{font-size:30px;letter-spacing:-1px;font-weight:550;margin:6px 0 12px}p{color:#64646d;margin:0}a{color:#18181b;text-underline-offset:4px;font-size:12px}small{font-size:11px;color:#64646d}.swatches{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:30px 0 24px}article{border:1px solid #e4e4e7;border-radius:12px;overflow:hidden}.color{height:128px;background:var(--color)}.caption{padding:16px 20px}.caption div{display:flex;justify-content:space-between;gap:12px;margin-bottom:5px}strong{font-weight:550}code{font:12px Geist,system-ui;letter-spacing:.4px}.neutrals{display:flex;gap:32px;border-top:1px solid #e4e4e7;border-bottom:1px solid #e4e4e7;padding:17px 0;margin-bottom:26px}.neutral{display:flex;align-items:center;gap:10px;font-size:12px}.chip{width:28px;height:28px;border-radius:6px;background:var(--color);border:1px solid #e4e4e7}.neutral small{display:block}h2{font-size:15px;font-weight:550;margin:0 0 12px}.example{position:relative;height:341px;overflow:hidden;border:1px solid #e4e4e7;border-radius:12px}.example img{position:absolute;width:1257.53px;max-width:none;left:-146.71px;top:-330.92px}footer{font-size:11px;color:#64646d;margin-top:12px}@media(max-width:700px){main{padding:24px}.swatches{gap:12px}.neutrals{flex-wrap:wrap;gap:16px}.example{display:none}h2{display:none}.caption{padding:12px}.caption div{flex-direction:column;gap:0}}
+</style>
+<main>
+<header><div><small>LIQORA / COLOR STUDY 03</small><h1>Smoke blue &amp; moss</h1><p>Muted tones, drawn from one quiet palette.</p></div><a href="./">Open prototype</a></header>
+<section class="swatches" aria-label="Chart series colors">
+<article><div class="color" style="--color:#8FA0A8"></div><div class="caption"><div><strong>Smoke blue</strong><code>#8FA0A8</code></div><p>Primary series · first LP</p></div></article>
+<article><div class="color" style="--color:#C9D1C8"></div><div class="caption"><div><strong>Moss</strong><code>#C9D1C8</code></div><p>Comparison series · second LP</p></div></article>
+</section>
+<section class="neutrals" aria-label="Supporting colors">
+<div class="neutral"><span class="chip" style="--color:#1E2327"></span><div>Ink <code>#1E2327</code><small>Interface icons &amp; primary text</small></div></div>
+<div class="neutral"><span class="chip" style="--color:#D8DFE6"></span><div>Mist blue <code>#D8DFE6</code><small>Gradient &amp; range accents</small></div></div>
+<div class="neutral"><span class="chip" style="--color:#F2F4F2"></span><div>Mist white <code>#F2F4F2</code><small>Supporting surfaces</small></div></div>
+</section>
+<h2>Applied to the current dashboard</h2>
+<div class="example"><img src="overview.jpg" alt="Current dashboard charts with a smoke blue primary LP and moss comparison LP, including labeled values and percentages"></div>
+<footer>Additional LPs: #61727B and #D8DFE6. Single-line charts: #8FA0A8 with a #D8DFE6 fading fill. Muted green/red badges show change. Chart example uses demo data.</footer>
+</main>
+</html>

@@ -1,0 +1,376 @@
+// Run: node mockup/check.mjs [--logic-only | --screenshots]. Uses installed agent-browser and Python 3.
+import { execFileSync, spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
+import assert from 'node:assert/strict';
+const root=fileURLToPath(new URL('.',import.meta.url));
+// This mode checks source fixtures and chart rendering without controlling a browser.
+if(process.argv.includes('--logic-only')){
+  const html=readFileSync(new URL('./index.html',import.meta.url),'utf8');
+  const source=html.split('<script>')[1].split('</script>')[0].replace(/\nrender\(\);\s*$/, '');
+  const element={addEventListener(){}};
+  runInNewContext(source+`
+    assert.equal(profit(positions[0]),295);
+    assert.equal(total(shownProfit),339);
+    assert.equal(positions[1].collected,60);
+    assert.equal(positions[1].input,6040);
+    assert.equal(profit(positions[1]),-104);
+    assert.equal(feeSummary(positions[1]),70);
+    const base={value:1000,input:1000,unclaimed:100,collected:0,withdraw:0,gas:0};
+    for(const invested of [0,60,100]){
+      const after={...base,value:1000+invested,input:1000+invested,unclaimed:0,collected:100};
+      assert.equal(profit(after),profit(base));
+      assert.equal(feeSummary(after),feeSummary(base));
+      assert.equal(profit({...after,value:1000,withdraw:invested}),100);
+      assert.equal(profit({...after,gas:2}),98);
+    }
+    for(const p of positions){
+      const rows=activityRows(p);
+      assert.equal(-rows.filter(r=>r.type==='Deposit').reduce((n,r)=>n+r.value,0),p.input);
+      assert.equal(rows.filter(r=>r.type!=='Deposit').reduce((n,r)=>n+r.value,0),p.collected+p.withdraw);
+      assert.equal(rows.reduce((n,r)=>n+r.value,0),p.collected+p.withdraw-p.input);
+      assert.ok(!Object.hasOwn(p,'reinvested'));
+    }
+    assert.deepEqual([...new Set(allPositions.flatMap(activityRows).map(r=>r.type))].sort(),['Collect','Deposit','Withdraw']);
+    for(const p of allPositions){
+      const rows=activityRows(p);
+      assert.equal(rows.filter(r=>r.type==='Collect').reduce((sum,r)=>sum+r.value,0),p.collected);
+      assert.equal(rows.filter(r=>r.type==='Withdraw').reduce((sum,r)=>sum+r.value,0),p.withdraw);
+      for(const row of rows.filter(r=>r.type==='Withdraw')){
+        const sameTransaction=rows.filter(r=>r.hash===row.hash);
+        assert.deepEqual(sameTransaction.map(r=>r.type),['Withdraw','Collect']);
+        assert.equal(sameTransaction.filter(r=>r.gas>0).length,1);
+        assert.equal(sameTransaction[0].date,sameTransaction[1].date);
+      }
+    }
+    assert.equal(new Set(transactionColors.map(([bg])=>bg)).size,6);
+    const luminance=hex=>hex.slice(1).match(/../g).map(n=>parseInt(n,16)/255).map(n=>n<=.04045?n/12.92:((n+.055)/1.055)**2.4).reduce((sum,n,i)=>sum+n*[.2126,.7152,.0722][i],0);
+    for(const [bg,fg] of transactionColors){const a=luminance(bg),b=luminance(fg);assert.ok((Math.max(a,b)+.05)/(Math.min(a,b)+.05)>=4.5);}
+    for(const p of allPositions){
+      const index=allPositions.indexOf(p),original=JSON.stringify(activityRows(p));
+      state.alloc[index]=6;state.verified=false;
+      assert.equal(JSON.stringify(displayedActivityRows(p)),original);
+      state.verified=true;
+      const rows=displayedActivityRows(p),swap=rows.at(-1);
+      assert.equal(swap.type,'Swap');assert.equal(swap.date,preparationDate);
+      assert.equal('0x'+swap.hash.repeat(32),preparationHash(p));
+      assert.ok(Math.abs(swap.value-19.2)<1e-9);assert.ok(Math.abs(swap.allocatedGas-1.2)<1e-9);
+      assert.equal(swap.values[1]-swap.values[0],30);
+      assert.ok(Math.abs(-swap.qty[1]*quotePrice-swap.values[1])<1e-8);
+      assert.equal(rows.filter(r=>r.type==='Swap').length,1);
+      assert.equal(JSON.stringify(activityRows(p)),original);
+      state.alloc[index]=2;assert.equal(displayedActivityRows(p).at(-1).value,6.4);
+      state.mode='base';assert.ok(activity(p).includes('Linked preparation'));
+      state.alloc[index]=0;assert.equal(JSON.stringify(displayedActivityRows(p)),original);
+    }
+    state.verified=false;state.mode='base';
+    const compoundRows=activityRows(positions[1]).filter(r=>r.hash==='42');
+    assert.equal(compoundRows.length,2);
+    assert.equal(compoundRows.reduce((n,r)=>n+r.value,0),0);
+    assert.equal(compoundRows.reduce((n,r)=>n+r.gas,0),1);
+    state.index=1;
+    assert.ok(!detail().includes('Reinvested directly'));
+    assert.ok(detail().includes('$6,040.00') && detail().includes('−1.72%'));
+    state.index=0;
+    assert.equal(total(feeSummary),275);
+    assert.equal(total(p=>p.value),26120);
+    assert.equal(feeMetrics(positions[0]).rate,36.5);
+    assert.ok(chartBadge(103,100,'Snapshot').includes('+3.00%'));
+    assert.ok(chartBadge(90,100,'Snapshot').includes('negative'));
+    assert.ok(chartBadge(36.5,32.85,'Chart',true).includes('+3.65 pp'));
+    assert.ok(chartBadge(0,0,'Snapshot').includes('0.00%'));
+    assert.equal(chartBadge(1,0,'Snapshot'),'');
+    assert.equal(chartBadge(undefined,10,'Snapshot'),'');
+    assert.equal(chartBadge(10,undefined,'Snapshot'),'');
+    assert.equal(positions.length,4);
+    assert.equal(new Set(seriesTokens).size,4);
+    assert.equal(state.alloc.length,8);
+    state.alloc=[2,3,1,0,1,4,0,0];state.index=0;assert.equal(allocationAvailable(),9);
+    state.index=1;assert.equal(allocationAvailable(),6);
+    state.alloc=allPositions.map(()=>0);state.index=0;
+    assert.equal(filteredPositions('open').length,4);
+    assert.equal(filteredPositions('in').length,2);
+    assert.equal(filteredPositions('out').length,2);
+    assert.equal(filteredPositions('closed').length,4);
+    assert.equal(closedPositions[0].id,positions[0].id);
+    assert.notEqual(closedPositions[0],positions[0]);
+    const openCharts=charts(),openOverview=home().split('<section id="positions"')[0];
+    assert.ok(home().indexOf('Position charts')<home().indexOf('role="tablist"'));
+    assert.ok(home().indexOf('role="tablist"')<home().indexOf('role="tabpanel"'));
+    assert.ok(!home().includes('<h2>Current positions'));
+    assert.ok(home().includes('class="section positions-section panel"'));
+    assert.ok(!home().includes('id="position-results" class="panel"'));
+    for(const p of allPositions){
+      state.index=allPositions.indexOf(p);
+      assert.ok(detail().includes('<h1>'+pairName(p)+'</h1>'));
+      const feeCard=detail().split('aria-label="Position summary"')[1].split('class="detail-metric"')[2];
+      assert.ok(feeCard.includes('Total fees') && feeCard.includes(amount(feeSummary(p))));
+      assert.ok(detail().includes('Price per '+p.base));
+      assert.ok(tokenTable('Token headings',[]).includes('>'+p.base+'</span>'));
+      for(const row of activityRows(p))row.qty.forEach((qty,i)=>assert.ok(Math.abs(Math.abs(qty)*(i?quotePrice:p.price)-row.values[i])<.000001));
+      assert.equal(preparationHash(p),preparationHash(allPositions.find(other=>other.base===p.base)));
+    }
+    assert.equal(new Set(allPositions.map(p=>preparationHash(p))).size,4);
+    state.index=0;
+    for(const [filter,count,value,fees,pnl] of [['in',2,17880,175,546],['out',2,8240,100,-207],['closed',4,0,590,915]]){
+      state.filter=filter;
+      assert.equal(filteredPositions().length,count);
+      assert.equal(filteredPositions().reduce((n,p)=>n+p.value,0),value);
+      assert.equal(filteredPositions().reduce((n,p)=>n+feeSummary(p),0),fees);
+      assert.equal(filteredPositions().reduce((n,p)=>n+shownProfit(p),0),pnl);
+      assert.equal(total(p=>p.value),26120);
+      assert.equal(total(feeSummary),275);
+      assert.equal(total(shownProfit),339);
+      assert.equal(charts(),openCharts);
+      assert.equal(home().split('<section id="positions"')[0],openOverview);
+      assert.equal((home().match(/data-position-index=/g)||[]).length,count);
+      assert.ok(!/NaN|Infinity|undefined/.test(home()));
+    }
+    for(const p of closedPositions){
+      state.index=allPositions.indexOf(p);
+      assert.ok(detail().includes('Closed cycle snapshot') && detail().includes('Price at close'));
+      assert.ok(detail().includes(cycleEnd(p)));
+      assert.equal(activityRows(p).reduce((n,r)=>n+r.value,0)-p.gas,profit(p));
+      assert.equal(activityRows(p).reduce((n,r)=>n+r.gas,0),p.gas);
+      assert.equal(trendPoints(p,'value').at(-1).value,0);
+      for(const period of Object.keys(periodHours)){
+        state.period=period;
+        assert.ok(!/NaN|Infinity|undefined/.test(detail()));
+        const points=trendPoints(p,'apr');
+        if(points.length)assert.equal(points.at(-1).value,feeMetrics(p).rate);
+      }
+    }
+    state.index=4;state.verified=true;state.mode='adjusted';state.alloc[4]=2;
+    assert.equal(shownProfit(closedPositions[0]),307.6);
+    assert.equal(shownProfit(positions[0]),295);
+    state.alloc[4]=0;state.verified=false;state.mode='base';
+    state.scenario='empty';state.filter='closed';assert.equal(total(shownProfit),0);assert.equal(filteredPositions().length,4);
+    state.scenario='partial';assert.ok(home().includes('1 LP is missing'));
+    state.scenario='normal';state.filter='open';state.index=0;state.period='24h';
+    assert.equal(total(p=>p.unclaimed),92);
+    assert.ok(!performanceCharts(positions[0]).includes('over chart range'));
+    assert.ok(!performanceCharts(positions[0]).includes('Position balance over time'));
+    for(let i=0;i<positions.length;i++){
+      state.index=i;
+      assert.ok(!/NaN|Infinity|undefined/.test(detail()));
+      assert.equal(activityRows(positions[i]).reduce((n,r)=>n+r.gas,0),positions[i].gas);
+      for(const period of Object.keys(periodHours)){state.period=period;assert.ok(!/NaN|Infinity/.test(detail()));}
+      state.period='24h';
+    }
+    state.index=0;
+    const chart=charts();
+    assert.ok(!chart.includes('Current uncollected fees by LP'));
+    assert.equal((chart.match(/data-action="detail"/g)||[]).length,8);
+    assert.equal((chart.match(/class="chart-badge /g)||[]).length,2);
+    assert.ok(chart.includes('39.1%') && chart.includes('20.6%'));
+    assert.ok(chart.includes('43.5%') && chart.includes('10.9%'));
+    const page=home();
+    assert.ok(page.indexOf('summary-strip') < page.indexOf('Position charts'));
+    assert.ok(page.indexOf('Position charts') < page.indexOf('id="positions"'));
+    assert.equal((page.match(/data-position-index=/g)||[]).length,4);
+    assert.equal((page.match(/class="summary-item"/g)||[]).length,4);
+    assert.ok(!page.includes('LP gas') && !page.includes('data-period='));
+    assert.ok(!chart.includes('NFT') && chart.includes('SPY / USDG'));
+    assert.ok(page.includes('−33.00%') && page.includes('+25.40%'));
+    assert.ok(page.includes('trend-down') && page.includes('trend-up'));
+    assert.ok(!page.includes('token-values') && !page.includes('pair-meta') && !page.includes('of deposits'));
+    assert.ok(chart.includes('$92.00') && chart.includes('$40.00') && chart.includes('$10.00'));
+    const homeCards=page.split('aria-label="Position totals"')[1].split('</section>')[0];
+    assert.ok(homeCards.indexOf('Position value')<homeCards.indexOf('Uncollected fees'));
+    assert.ok(homeCards.indexOf('Uncollected fees')<homeCards.indexOf('Total fees'));
+    assert.ok(homeCards.indexOf('Total fees')<homeCards.indexOf('PnL'));
+    assert.equal(trendTime(20),'Yesterday 18:20');
+    assert.equal(trendTime(8),'06:20');
+    for(const p of positions){
+      assert.equal(trendPoints(p,'value').at(-1).value,p.value);
+      assert.equal(trendPoints(p,'value')[0].ago,Math.min(24,p.hours));
+      for(const period of Object.keys(periodHours)){
+        state.period=period;
+        const points=trendPoints(p,'apr'),rate=feeMetrics(p).rate;
+        if(rate===undefined)assert.equal(points.length,0);
+        else assert.equal(points.at(-1).value,rate);
+        assert.ok(!/NaN|Infinity/.test(performanceCharts(p)));
+      }
+    }
+    state.period='24h';
+    assert.ok(detail().includes('0.002000 ETH') && detail().includes('assets/ethereum.svg'));
+    const detailPage=detail();
+    const summary=detailPage.split('aria-label="Position summary"')[1].split('</section>')[0];
+    assert.ok(summary.indexOf('Position value')<summary.indexOf('Total fees'));
+    assert.ok(summary.indexOf('Total fees')<summary.indexOf('Fee APR'));
+    assert.ok(summary.indexOf('Fee APR')<summary.indexOf('position-pnl'));
+    assert.equal((summary.match(/class="icon /g)||[]).length,8);
+    assert.ok(detailPage.includes('token-details') && detailPage.includes('Current price'));
+    const tables=detailPage.split('<table class="token-table"').slice(1).map(t=>t.split('</table>')[0]);
+    assert.equal(tables.length,2);
+    for(const table of tables){
+      assert.equal((table.split('<tbody>')[0].match(/class="logo /g)||[]).length,2);
+      assert.ok(!table.split('<tbody>')[1].includes('<img'));
+      assert.equal((table.match(/scope="col"/g)||[]).length,4);
+    }
+    assert.ok(tables[0].includes('0.16') && tables[0].includes('20.20202') && tables[0].includes('$80.00'));
+    assert.ok(tokenTable('Missing', [['Initial deposit','—','Missing',[],[10,20]]]).includes('muted">—'));
+    assert.ok(!tokenTable('Missing', [['Initial deposit','—','Missing',[],[10,20]]]).includes('>10<'));
+
+    assert.ok(activity(positions[0]).includes('0.00080000 ETH'));
+    assert.ok(activity(positions[0]).includes('Txn Hash'));
+    assert.equal(activityRows(positions[0]).reduce((n,r)=>n+r.gas,0),positions[0].gas);
+    for(const p of positions)for(const row of activityRows(p))assert.equal(row.values.reduce((a,b)=>a+b,0),Math.abs(row.value));
+    assert.ok(!change(10,0,true).includes('$'));
+    assert.ok(!/NaN|Infinity/.test(change(10,0)));
+    assert.ok(!/\\bUSD\\b|P&L/.test(page));
+    for (const p of positions) {
+      assert.equal(tokenValues(p).reduce((a,b)=>a+b,0),p.value);
+      assert.equal(tokenValues(p,true).reduce((a,b)=>a+b,0),p.unclaimed);
+    }
+    assert.ok(rangeView(positions[0]).includes('$475.20'));
+    assert.ok(rangeView(positions[1]).includes('$2,574.00'));
+    assert.ok(rangeView(positions[1]).includes('Out of range'));
+    state.period='1h';assert.ok(home().includes('36.50%'));
+    assert.ok(!home().includes('87.60%'));assert.ok(detail().includes('87.60%'));
+    state.period='24h';
+    state.verified=true;state.mode='adjusted';state.alloc[0]=6;
+    assert.equal(shownProfit(positions[0]),275.8);
+    assert.equal(charts(),chart);
+    state.verified=false;assert.equal(total(shownProfit),339);
+    state.scenario='partial';assert.ok(home().includes('1 LP is missing a historical deposit price.'));
+    assert.equal(charts(),chart);
+    state.scenario='empty';assert.equal(total(feeSummary),0);
+    assert.ok(charts().includes('No positions to chart') && !charts().includes('<canvas'));
+    state.scenario='normal';positions.forEach(p=>{p.value=0;p.collected=0;p.unclaimed=0});
+    assert.ok(!/NaN|Infinity/.test(charts()));
+    assert.equal(percent(0,0),'0.0%');
+  `,{assert,document:{querySelector:()=>element,addEventListener(){},fonts:{ready:{then(){}}}},window:{addEventListener(){}},setInterval(){}});
+  assert.ok(!/[\u4e00-\u9fff]/.test(html));
+  const sprite=readFileSync(new URL('./assets/reicon.svg',import.meta.url),'utf8');
+  assert.ok(sprite.includes('id="Category"') && sprite.includes('id="Wallet"'));
+  console.log('PASS: chart totals, percentages, metric-to-chart-to-list ordering, current LP rows, zero/empty/partial states, allocation privacy and APR consistency.');
+  process.exit(0);
+}
+const server=spawn('python3',['-u','-m','http.server','0','--bind','127.0.0.1','--directory',root]);
+const browser=(...args)=>execFileSync('agent-browser',['--session','liqora-check',...args],{encoding:'utf8'});
+const click=name=>browser('find','role','button','click','--name',name,'--exact');
+const fill=(label,value)=>browser('find','label',label,'fill',value);
+const check=expression=>browser('eval',`(() => { if (!(${expression})) throw new Error(${JSON.stringify(expression)}); return 'pass'; })()`);
+const text=(selector,value)=>check(`document.querySelector(${JSON.stringify(selector)}).innerText.includes(${JSON.stringify(value)})`);
+const english=()=>check("document.documentElement.lang==='en' && !/[\\u4e00-\\u9fff]/.test(document.body.innerText)");
+const snapshot=name=>{if(process.argv.includes('--screenshots')){browser('wait','--fn','!document.querySelector("#toast").classList.contains("show")');browser('screenshot',fileURLToPath(new URL(`./${name}.jpg`,import.meta.url)))}};
+try {
+  const port=await new Promise((resolve,reject)=>{server.stdout.on('data',data=>{const m=data.toString().match(/port (\d+)/);if(m)resolve(m[1])});server.on('error',reject);server.on('exit',code=>reject(new Error(`Preview server exited: ${code}`)))});
+  if(/[\u4e00-\u9fff]/.test(readFileSync(new URL('./index.html',import.meta.url),'utf8')))throw new Error('Non-English copy remains in the prototype.');
+  browser('open',`http://127.0.0.1:${port}/`);
+  browser('set','viewport','1440','1024');
+  text('#app','+$339.00'); text('#app','26,120.00'); text('#app','−33.00%'); text('#total-fees','275.00'); english();
+  check("document.querySelectorAll('[role=tab]').length===4 && document.querySelector('[role=tab][aria-selected=true]').dataset.filter==='open'");
+  check("document.querySelectorAll('.charts canvas').length===2 && document.querySelectorAll('.pair-logos img').length===8");
+  text('.chart-data','39.1%'); text('.chart-legend','43.5%');
+  check("document.documentElement.scrollWidth===innerWidth && document.querySelectorAll('.lp-table tbody tr').length===4");
+  snapshot('overview');
+  text('.chart-data','ETH / USDG'); text('.chart-data','NVDA / USDG'); text('.chart-legend','CRCL / USDG');
+  check("document.querySelector('#positions.panel > .section-head [role=tablist]') && !document.querySelector('#positions .section-head h2')");
+  check("!document.querySelector('.sidebar') && !document.querySelector('#position-results').classList.contains('panel')");
+  check("document.querySelector('[role=tab]').getBoundingClientRect().height<=36 && parseFloat(getComputedStyle(document.querySelector('[role=tab]')).fontSize)<=13");
+  browser('click','#tab-in'); text('#app','26,120.00'); text('#total-fees','275.00');
+  check("document.querySelectorAll('.lp-table tbody tr').length===2");
+  browser('press','ArrowRight'); text('#app','26,120.00'); text('#total-fees','275.00');
+  check("document.activeElement.id==='tab-out' && document.querySelectorAll('.lp-table tbody tr').length===2");
+  browser('press','End'); text('#app','+$339.00'); text('#total-fees','275.00');
+  check("document.querySelectorAll('.lp-table tbody tr').length===4 && document.activeElement.id==='tab-closed'");
+  snapshot('closed-overview');
+  click('View NFT 204801 details'); text('#position-pnl','+$314.00'); text('#total-fees','120.00');
+  text('#app','Closed cycle snapshot'); text('#app','Aug 11, 2026'); text('#app','Price at close'); text('#app','24h ending at close');
+  check("document.querySelectorAll('.token-table').length===2 && document.documentElement.scrollWidth===innerWidth");
+  click('30d'); text('#apr','Insufficient history for 30d'); click('24h'); text('#apr','54.75%');
+  snapshot('closed-detail');
+  click('Back to positions'); check("document.querySelector('#tab-closed').getAttribute('aria-selected')==='true'");
+  browser('select','#scenario','empty'); text('#app','+$0.00'); text('#tab-open','(0)'); text('#tab-closed','(4)');
+  browser('click','#tab-open'); text('#app','No current positions');
+  browser('select','#scenario','normal'); text('#app','+$339.00');
+  click('View NFT 204801 details'); click('1h');
+  text('#app','+$295.00'); text('#pnl-ratio','+2.95%'); text('#app','10,200.00'); text('#total-fees','100.00');
+  text('.activity-table','0.12 SPY'); text('.activity-table','Txn Hash');
+  text('#apr','87.60%'); text('#daily-fees','24.00'); text('#app','Daily equivalent · 1h');
+  click('7d'); text('#apr','20.86%'); text('#daily-fees','5.71');
+  click('30d'); text('#apr','Insufficient history for 30d');
+  click('24h'); text('#apr','36.50%'); text('#daily-fees','10.00'); english();
+  click('Link preparation costs'); text('#dialog','Simulate verification'); english();
+  click('Simulate verification'); browser('press','Escape');
+  check("document.activeElement.dataset.action==='allocate'"); click('Link preparation costs');
+  check("document.querySelector('#dialog').classList.contains('allocation-modal') && Math.abs(document.querySelector('#dialog').getBoundingClientRect().x-(innerWidth-document.querySelector('#dialog').offsetWidth)/2)<2");
+  snapshot('allocation-start');
+  fill('Transaction hash','0x123'); click('Parse transaction'); text('#hash-error','64 hexadecimal');
+  fill('Transaction hash','0x'+'cd'.repeat(32)); click('Parse transaction'); text('#hash-error','Only the sample hash');
+  click('Use sample hash'); click('Parse transaction');
+  fill('Amount used for this LP','11'); check("document.querySelector('#save-allocation').disabled");
+  fill('Amount used for this LP','0'); check("document.querySelector('#save-allocation').disabled");
+  fill('Amount used for this LP','6');
+  text('#allocated-total','$19.20'); text('#preview-pnl','+$275.80'); english();
+  check("document.querySelectorAll('#allocation-form').length===1 && document.querySelector('.allocation-grid').children.length===2 && document.querySelector('#dialog').scrollWidth===document.querySelector('#dialog').clientWidth");
+  snapshot('allocation');
+  browser('set','viewport','1100','900');
+  check("document.querySelector('#dialog').getBoundingClientRect().bottom<=innerHeight && document.querySelector('#dialog').scrollWidth===document.querySelector('#dialog').clientWidth && document.querySelector('#save-allocation').getBoundingClientRect().bottom<=innerHeight");
+  browser('set','viewport','1440','1024');
+  click('Save allocation'); text('#position-pnl','+$275.80'); text('#pnl-ratio','+2.76%'); text('#app','19.20');
+  text('#total-fees','100.00'); text('#apr','36.50%');
+  text('[data-activity-type=Swap]','Linked preparation'); text('[data-activity-type=Swap]','19.20');
+  check("document.querySelectorAll('[data-activity-type=Swap]').length===1 && document.querySelector('.activity-table tbody').lastElementChild.dataset.activityType==='Swap'");
+  browser('scrollintoview','.history-panel'); snapshot('linked-swap');
+  browser('set','viewport','1100','900'); check('document.documentElement.scrollWidth<=innerWidth'); browser('set','viewport','1440','1024');
+  click('Back to positions'); click('Disconnect verification'); click('View NFT 204801 details');
+  check("!document.querySelector('[data-activity-type=Swap]')"); text('#position-pnl','+$295.00');
+  click('Link preparation costs'); click('Simulate verification'); browser('press','Escape');
+  check("document.querySelectorAll('[data-activity-type=Swap]').length===1");
+  click('Adjusted PnL'); text('#position-pnl','+$275.80');
+  click('Edit preparation costs'); click('Save allocation'); text('#position-pnl','+$275.80'); check("document.querySelectorAll('[data-activity-type=Swap]').length===1");
+  click('Back to positions'); text('#app','+$319.80');
+  click('View NFT 204802 details'); text('#apr','Insufficient history for 24h');
+  text('.activity-table','Withdraw'); check("!document.querySelector('.activity-table').innerText.includes('Withdraw & collect')");
+  check("(() => { const tags=[...document.querySelectorAll('.txn-tag')], colors=new Map(); if(tags.length!==6)return false; for(const tag of tags){const hash=tag.dataset.hash,bg=getComputedStyle(tag).backgroundColor;if(colors.has(hash)&&colors.get(hash)!==bg)return false;colors.set(hash,bg);}return colors.size===4 && new Set(colors.values()).size===4;})()");
+  browser('scrollintoview','.history-panel'); snapshot('activity');
+  text('.detail-heading','ETH / USDG'); text('.token-table','ETH'); text('.activity-table','0.008 ETH');
+  text('#app','Total deposits'); text('#app','Principal withdrawn');
+  check("!document.querySelector('#app').innerText.includes('Reinvested directly')");
+  text('#app','Includes fees collected and reinvested'); text('#app','6,040.00'); text('#pnl-ratio','−1.72%'); text('#total-fees','70.00');
+  click('1h'); text('#apr','0.00%'); text('#daily-fees','0.00');
+  click('Link preparation costs');
+  fill('Transaction hash','0x'+'ab'.repeat(32)); click('Parse transaction'); text('#hash-error','Only the sample hash');
+  click('Use sample hash'); click('Parse transaction'); text('#qty-help','Received 10 ETH');
+  fill('Amount used for this LP','11'); check("document.querySelector('#save-allocation').disabled");
+  click('Use all remaining'); check("document.querySelector('#quantity').value==='10'");
+  text('#allocated-total','$32.00'); click('Save allocation');
+  click('Back to positions'); text('#app','+$287.80');
+  click('View NFT 204802 details'); click('Remove allocation'); browser('click','#dialog [data-action=confirm-revoke]');
+  click('Back to positions'); text('#app','+$319.80');
+  click('View NFT 204801 details'); text('#apr','87.60%'); click('Edit preparation costs');
+  click('Change transaction'); check("!document.querySelector('#hash-form').hidden && !document.querySelector('#save-allocation')");
+  click('Parse transaction'); click('Use all remaining'); text('#allocated-total','$32.00');
+  click('Save allocation'); text('#position-pnl','+$263.00');
+  browser('select','#scenario','save-error'); click('Edit preparation costs');
+  fill('Amount used for this LP','6'); click('Save allocation'); text('#save-error','previous record is unchanged'); english();
+  browser('press','Escape'); text('#position-pnl','+$263.00'); text('[data-activity-type=Swap]','32.00');
+  browser('select','#scenario','normal'); click('Remove allocation'); browser('click','#dialog [data-action=confirm-revoke]'); text('#position-pnl','+$295.00'); check("!document.querySelector('[data-activity-type=Swap]')");
+  click('24h'); browser('click','[data-action=mode][data-mode=base]'); snapshot('detail');
+  click('Back to positions'); click('Disconnect verification'); text('#app','+$339.00');
+  check("!document.querySelector('[data-mode]') && !document.querySelector('#app').innerText.includes('19.20')");
+  browser('select','#scenario','partial'); text('#app','1 LP is missing a historical deposit price.');
+  click('View NFT 204802 details'); text('#app','Historical price unavailable');
+  click('1h'); text('#apr','0.00%');
+  browser('select','#scenario','stale'); click('Refresh');
+  browser('wait','--fn','!document.querySelector("[data-action=refresh]").disabled');
+  text('#app','Showing the last snapshot'); text('#app','14:20:00'); english();
+  browser('select','#scenario','empty'); text('#app','No current positions'); text('#total-fees','0.00');
+  browser('select','#scenario','normal');
+  browser('set','viewport','1100','900');
+  check('document.documentElement.scrollWidth<=window.innerWidth');
+  click('View NFT 204801 details'); check('document.documentElement.scrollWidth<=window.innerWidth');
+  click('Link preparation costs'); browser('press','Escape');
+  check("!document.querySelector('#dialog').open && document.activeElement.dataset.action==='allocate'");
+  click('Back to positions'); click('Change address');
+  fill('Wallet address','bad'); click('View positions'); text('#address-error','valid wallet address');
+  fill('Wallet address','0x'+'22'.repeat(20)); click('View positions'); text('#address-error','Live queries are not connected'); english();
+  click('Use demo wallet'); text('#app','+$339.00');
+  check("[...document.images].every(image=>image.complete && image.naturalWidth>0)");
+  const errors=browser('errors'); if(errors.trim())throw new Error(errors);
+  console.log('PASS: English UI, PnL/fee totals/deposit ratios, shared APR windows and daily averages, allocation capacity/replacement/removal, privacy, error states, query validation, focus return and desktop widths.');
+} finally { try { browser('close'); } finally { server.kill(); } }

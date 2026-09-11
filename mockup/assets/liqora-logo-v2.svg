@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 470 168" role="img" aria-labelledby="title desc">
+  <title id="title">Liqora logo</title>
+  <desc id="desc">A circular liquidity range mark paired with the lowercase Liqora wordmark.</desc>
+  <style>
+    @font-face {
+      font-family: "Geist Logo";
+      src: url("geist-latin.woff2") format("woff2");
+      font-weight: 100 900;
+    }
+    .wordmark {
+      fill: #18181b;
+      font-family: "Geist Logo", "Helvetica Neue", Arial, sans-serif;
+      font-size: 88px;
+      font-weight: 640;
+      letter-spacing: -4.2px;
+    }
+  </style>
+
+  <!-- The open ring is a liquidity pool; the live tick turns it into a q. -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M88 26a58 58 0 1 0 48 90" stroke="#18181b" stroke-width="18"/>
+    <path d="M136 116l18 18" stroke="#18181b" stroke-width="18"/>
+    <path d="M136 55v26" stroke="#5CA1FF" stroke-width="18"/>
+  </g>
+
+  <text class="wordmark" x="190" y="116">liqora</text>
+  <circle cx="452" cy="106" r="8" fill="#5CA1FF"/>
+</svg>
